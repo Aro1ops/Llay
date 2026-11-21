@@ -1,0 +1,169 @@
+/* ===== ОКНО ГОЛОСОВАНИЯ: оранжевый + чёрный ===== */
+:root {
+  --vote-orange: #ff7a00;
+  --vote-orange-light: #ffa040;
+  --vote-black: #0a0a0a;
+  --vote-panel: #141414;
+  /* РАЗМЕР КАРТОЧЕК НОМИНАНТОВ (фиксированная ширина): меньше число — меньше карточки */
+  --vote-card-w: 120px;
+  /* ширина самого окна */
+  --vote-dialog-w: 700px;
+  /* РАЗМЕР КНОПОК «ПРОГОЛОСОВАТЬ» В ОКНЕ: 1 = как на сайте, 0.5 = вдвое меньше */
+  --vote-btn-zoom: 0.55;
+  /* размер кнопки «Подтвердить» */
+  --vote-confirm-zoom: 0.8;
+  /* шрифт сайта (подключён в Button.css через @font-face) */
+  --vote-font: "Old King", Georgia, serif;
+
+}
+
+html:has(.vote-modal.is-open),
+html:has(.vote-modal.is-open) body { overflow: hidden !important; }
+
+.vote-modal, .vote-modal * { box-sizing: border-box; }
+/* один шрифт на всё окно, включая кнопки и подсказки */
+.vote-modal, .vote-modal * { font-family: var(--vote-font); }
+
+.vote-modal {
+  position: fixed; inset: 0; display: none; place-items: center;
+  padding: 16px; z-index: 2147482000;
+  background: rgb(0 0 0 / 85%); backdrop-filter: blur(6px);
+  font-family: var(--vote-font); color: #fff;
+  pointer-events: auto !important;
+}
+.vote-modal * { pointer-events: auto !important; }
+.vote-modal.is-open { display: grid; animation: vote-fade .2s ease-out; }
+@keyframes vote-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.vote-dialog {
+  width: min(var(--vote-dialog-w), 100%); max-height: 90vh;
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--vote-black);
+  border: 1px solid rgb(255 122 0 / 55%); border-radius: 20px;
+  box-shadow: 0 0 0 1px #000, 0 0 60px rgb(255 122 0 / 25%), 0 24px 60px rgb(0 0 0 / 70%);
+}
+
+.vote-header {
+  position: relative; padding: 26px 70px 20px 28px;
+  background:
+    radial-gradient(120% 160% at 0% 0%, rgb(255 122 0 / 28%), transparent 60%),
+    var(--vote-black);
+  border-bottom: 2px solid var(--vote-orange);
+}
+.vote-label {
+  margin: 0 0 6px; font-size: 13px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--vote-orange);
+}
+.vote-title { margin: 0; font-size: clamp(24px, 4vw, 38px); line-height: 1.1; font-weight: 800; }
+.vote-close {
+  position: absolute; top: 18px; right: 18px; width: 42px; height: 42px;
+  border-radius: 50%; border: 2px solid var(--vote-orange);
+  background: transparent; color: var(--vote-orange);
+  font-size: 22px; line-height: 1; cursor: pointer;
+  transition: background .15s, color .15s, transform .15s;
+}
+.vote-close:hover { background: var(--vote-orange); color: #000; transform: rotate(90deg); }
+
+.vote-body {
+  padding: 24px 28px 28px; overflow-y: auto;
+  scrollbar-color: var(--vote-orange) #1a1a1a; scrollbar-width: thin;
+}
+.vote-body::-webkit-scrollbar { width: 8px; }
+.vote-body::-webkit-scrollbar-thumb { background: var(--vote-orange); border-radius: 8px; }
+
+.vote-grid {
+  display: grid; gap: 12px;
+  grid-template-columns: repeat(auto-fill, var(--vote-card-w));
+  justify-content: center;
+  padding: 6px 4px 10px;
+  align-items: stretch;
+}
+
+.vote-nominee {
+  position: relative; display: flex; flex-direction: column; gap: 8px;
+  height: 100%; min-width: 0;
+  padding: 8px 8px 10px; background: var(--vote-panel);
+  border: 1px solid #2b2b2b; border-radius: 12px;
+  transition: border-color .15s, transform .15s, box-shadow .15s;
+}
+.vote-nominee:hover {
+  border-color: var(--vote-orange); transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgb(255 122 0 / 18%);
+}
+.vote-nominee.is-voted {
+  border-color: var(--vote-orange);
+  box-shadow: 0 0 0 1px var(--vote-orange), 0 8px 28px rgb(255 122 0 / 30%);
+}
+.vote-nominee.is-voted::after {
+  content: "Ваш выбор"; position: absolute; top: 14px; left: 14px;
+  padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 700;
+  background: var(--vote-orange); color: #000;
+}
+
+.vote-photo {
+  aspect-ratio: 1; width: 100%; border-radius: 10px; overflow: hidden;
+  display: grid; place-items: center;
+  background: linear-gradient(135deg, #1c1c1c 0%, #000 55%, rgb(255 122 0 / 55%) 140%);
+}
+.vote-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vote-photo span { font-size: 44px; font-weight: 800; color: var(--vote-orange); }
+
+.vote-name {
+  margin: 0; text-align: center; font-size: 14px; font-weight: 700;
+  line-height: 1.2; overflow-wrap: anywhere;
+  flex: 1 1 auto;                 /* растягивается и прижимает кнопку вниз */
+  display: flex; align-items: center; justify-content: center;
+}
+.vote-nominee .button-gem {
+  display: block; flex: none; margin: 0 auto;
+  /* внутренняя ширина карточки (card-w − padding 16 − border 2), делённая на zoom */
+  width: calc((var(--vote-card-w) - 18px) / var(--vote-btn-zoom));
+  max-width: none; min-width: 0;
+  padding-left: 0; padding-right: 0;
+  white-space: nowrap; text-align: center;
+  cursor: pointer; zoom: var(--vote-btn-zoom);
+}
+.vote-nominee .button-gem .button-gem__text,
+.vote-nominee .button-gem .button-gem__text span {
+  white-space: nowrap; max-width: 100%;
+}
+
+.vote-nominee.is-selected {
+  border-color: var(--vote-orange);
+  box-shadow: 0 0 0 1px var(--vote-orange), 0 8px 24px rgb(255 122 0 / 22%);
+}
+.vote-nominee.is-selected::after {
+  content: "Выбрано"; position: absolute; top: 14px; left: 14px;
+  padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 700;
+  background: #fff; color: #000;
+}
+.vote-nominee.is-dim { opacity: .4; }
+.vote-nominee.is-dim:hover { transform: none; border-color: #2b2b2b; box-shadow: none; }
+.vote-nominee .button-gem[disabled] { cursor: default; opacity: 1; filter: none; }
+
+.vote-footer {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 14px 28px; border-top: 1px solid rgb(255 122 0 / 35%);
+  background: #0f0f0f;
+}
+.vote-footer.is-locked { justify-content: center; }
+.vote-hint { margin: 0; font-size: 14px; color: #bdbdbd; }
+.vote-footer.is-locked .vote-hint { color: var(--vote-orange); font-weight: 700; }
+.vote-confirm { zoom: var(--vote-confirm-zoom); flex: none; cursor: pointer; }
+.vote-confirm[hidden] { display: none; }
+.vote-confirm[disabled] { opacity: .35; filter: grayscale(.6); cursor: not-allowed; }
+
+.vote-empty {
+  padding: 40px 12px; text-align: center; color: #9a9a9a; font-size: 16px;
+}
+
+@media (max-width: 520px) {
+  .vote-header { padding: 20px 64px 16px 18px; }
+  .vote-body { padding: 16px; }
+  .vote-grid { grid-template-columns: repeat(2, var(--vote-card-w)); gap: 8px; }
+  .vote-footer { flex-direction: column; padding: 12px 16px; text-align: center; }
+  .vote-name { font-size: 13px; }
+  .vote-photo span { font-size: 36px; }
+
+}
+

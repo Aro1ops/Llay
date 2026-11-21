@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Шуточная CAPTCHA</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    background: #f2f4f7; font: 16px Arial, sans-serif; color: #222;
+  }
+  .captcha-open {
+    border: 0; border-radius: 8px; padding: 13px 22px;
+    background: #4285e8; color: white; font-size: 16px; cursor: pointer;
+  }
+  .captcha-open:hover { background: #3276d5; }
+
+  .captcha-overlay {
+    position: fixed; inset: 0; display: none; place-items: center;
+    padding: 16px; background: rgb(0 0 0 / 58%); z-index: 1000;
+  }
+  .captcha-overlay.is-open { display: grid; }
+  .captcha {
+    width: min(476px, 100%); background: #fff; overflow: hidden;
+    box-shadow: 0 12px 40px rgb(0 0 0 / 28%);
+  }
+  .captcha-header {
+    background: #4a90e2; color: #fff; padding: 25px 27px 22px;
+    min-height: 165px;
+  }
+  .language-toggle {
+    float: right; margin: -8px -10px 8px 12px; padding: 7px 10px;
+    border: 1px solid rgb(255 255 255 / 65%); border-radius: 5px;
+    color: white; background: rgb(255 255 255 / 12%); cursor: pointer;
+    font-size: 12px; font-weight: bold;
+  }
+  .captcha-instruction { font-size: 18px; line-height: 1.3; }
+  .captcha-target {
+    display: block; margin: 5px 0 2px; font-size: 36px;
+    line-height: 1.08; font-weight: 700; overflow-wrap: anywhere;
+  }
+  .captcha-subtitle { font-size: 18px; line-height: 1.3; }
+  .captcha-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 2px; background: #fff; padding: 2px;
+  }
+  .captcha-tile {
+    aspect-ratio: 1; min-width: 0; position: relative; cursor: pointer;
+    padding: 0; border: 0; overflow: hidden; background: #ddd;
+    outline: 0;
+  }
+  .captcha-tile img {
+    width: 100%; height: 100%; display: block; object-fit: cover;
+  }
+  .captcha-tile.selected::after {
+    content: ""; position: absolute; inset: 0;
+    border: 5px solid #4285e8; background: rgb(66 133 232 / 22%);
+  }
+  .captcha-tile.selected::before {
+    content: "✓"; position: absolute; z-index: 1; right: 7px; top: 5px;
+    color: #fff; font-size: 24px; font-weight: bold;
+    text-shadow: 0 1px 4px #000;
+  }
+  .captcha-footer {
+    padding: 12px 16px 16px; display: flex; align-items: center;
+    justify-content: space-between; gap: 12px; border-top: 1px solid #eee;
+  }
+  .captcha-status { font-size: 13px; color: #666; min-height: 18px; }
+  .captcha-actions { display: flex; gap: 8px; }
+  .captcha-actions button {
+    border: 0; border-radius: 4px; padding: 11px 16px;
+    cursor: pointer; font-weight: 600;
+  }
+  .captcha-confirm { color: #fff; background: #4285e8; }
+  .captcha-close { background: #eee; color: #333; }
+  @media (max-width: 420px) {
+    .captcha-header { padding: 20px; min-height: 145px; }
+    .captcha-target { font-size: 30px; }
+    .captcha-instruction, .captcha-subtitle { font-size: 16px; }
+    .captcha-footer { align-items: flex-start; flex-direction: column; }
+    .captcha-actions { width: 100%; }
+    .captcha-actions button { flex: 1; }
+  }
+</style>
+</head>
+<body>
+
+<button class="captcha-open" id="openCaptcha">Я не робот</button>
+
+<div class="captcha-overlay" id="captchaOverlay" role="dialog"
+     aria-modal="true" aria-label="Проверка CAPTCHA">
+  <section class="captcha">
+    <header class="captcha-header">
+      <button class="language-toggle" id="languageToggle" type="button"
+              aria-label="Переключить язык">RU / EN</button>
+      <div class="captcha-instruction" id="captchaInstruction">Выберите все квадраты, в которых изображены</div>
+      <strong class="captcha-target" id="captchaTarget">объекты</strong>
+      <div class="captcha-subtitle">Нажмите «Подтвердить», когда закончите.</div>
+    </header>
+
+    <div class="captcha-grid" id="captchaGrid"></div>
+
+    <footer class="captcha-footer">
+      <div class="captcha-status" id="captchaStatus" aria-live="polite"></div>
+      <div class="captcha-actions">
+        <button class="captcha-close" id="closeCaptcha" type="button">Закрыть</button>
+        <button class="captcha-confirm" id="confirmCaptcha" type="button">Подтвердить</button>
+      </div>
+    </footer>
+  </section>
+</div>
+
+<script>
+/*
+  НАСТРОЙКА CAPTCHA
+  1. Укажи свою картинку в image.
+  2. В elements перечисли объекты, которые есть на этой картинке.
+     Названия должны совпадать с вариантами в tasks.
+  3. Добавь или измени задания в массиве tasks.
+  4. Английские названия задаются в объекте translations ниже.
+*/
+const tiles = [
+  { image: "Resources/row-1-column-1.jpg", elements: ["Мид 11","Мид 2"] },
+  { image: "Resources/row-1-column-2.jpg", elements: ["Мид 2","Мид 9","Мид 6"] },
+  { image: "Resources/row-1-column-3.jpg", elements: ["Мид 18", "Мид 15","Мид 14"] },
+  { image: "Resources/row-1-column-4.jpg", elements: ["Мид 19"] },
+
+  { image: "Resources/row-2-column-1.jpg", elements: ["Мид 11","Мид 13","Мид 2"] },
+  { image: "Resources/row-2-column-2.jpg", elements: ["Мид 3","Мид 2","Мид 7","Мид 12","Мид 17"] },
+  { image: "Resources/row-2-column-3.jpg", elements: ["Мид 17","Мид 16","Мид Зиги"] },
+  { image: "Resources/row-2-column-4.jpg", elements: ["Мид 19"] },
+
+  { image: "Resources/row-3-column-1.jpg", elements: ["Мид 5","Мид 1"] },
+  { image: "Resources/row-3-column-2.jpg", elements: ["Мид 1","Мид 20"] },
+  { image: "Resources/row-3-column-3.jpg", elements: ["Мид Зиги","Мид 4"] },
+  { image: "Resources/row-3-column-4.jpg", elements: ["Мид 10"] },
+
+  { image: "Resources/row-4-column-1.jpg", elements: ["Мид ?"] },
+  { image: "Resources/row-4-column-2.jpg", elements: ["Мид 8","Мид 8"] },
+  { image: "Resources/row-4-column-3.jpg", elements: ["Мид 8","Мид 4"] },
+  { image: "Resources/row-4-column-4.jpg", elements: ["Мид ?"] }
+];
+
+const tasks = ["Мид 1", "Мид 2", "Мид 3", "Мид 4","Мид 5","Мид 6","Мид 7","Мид 8","Мид 9","Мид 10",
+"Мид 11","Мид 12","Мид 13","Мид 14","Мид 15","Мид 16","Мид 18","Мид 19","Мид 20","Мид Зиги","Мид 17"];
+
+const translations = {
+  "Мид 1":"Мид", 
+  "Мид 2":"Фантан", 
+  "Мид 3":"Радио", 
+  "Мид 4":"Спавн КТ",
+  "Мид 5":"Спавр Т",
+  "Мид 6":"Аппарты",
+  "Мид 7":"Окно",
+  "Мид 8":"Шорт",
+  "Мид 9":"Лестница в аппарты",
+  "Мид 10":"Угол Спавн кт",
+  "Мид 11":"Колонны",
+  "Мид 12":"Под окном",
+  "Мид 13":"Нора Вели",
+  "Мид 14":"Плент А",
+  "Мид 15":"Под балконои аппарт",
+  "Мид 16":"Боксы писек",
+  "Мид 18":"Балкон аппарт",
+  "Мид 19":"спуск",
+  "Мид 20":"Спуск мид",
+  "Мид Зиги":"Кишки",
+  "Мид 17":"Писки"
+};
+const uiText = {
+  ru: {
+    instruction: "Выберите все квадраты, в которых изображены",
+    subtitle: "Нажмите «Подтвердить», когда закончите.",
+    close: "Закрыть", confirm: "Подтвердить",
+    success: "Верно! Проверка пройдена 😎",
+    retry: "Не совсем. Попробуй ещё раз!"
+  },
+  en: {
+    instruction: "Выберите все квадраты, в которых изображены",
+    subtitle: "Нажмите «Подтвердить», когда закончите.",
+    close: "Закрыть", confirm: "Подтвердить",
+    success: "Верно! Проверка пройдена 😎",
+    retry: "Не совсем. Попробуй ещё раз!"
+  }
+};
+let language = "ru";
+
+function translated(value) {
+  return language === "en" ? (translations[value] || value) : value;
+}
+function updateLanguageUI() {
+  const text = uiText[language];
+  document.getElementById("captchaInstruction").textContent = text.instruction;
+  document.querySelector(".captcha-subtitle").textContent = text.subtitle;
+  document.getElementById("closeCaptcha").textContent = text.close;
+  document.getElementById("confirmCaptcha").textContent = text.confirm;
+  targetText.textContent = translated(currentTask);
+  document.getElementById("languageToggle").textContent =
+    language === "ru" ? "RU / EN" : "EN / RU";
+}
+
+const overlay = document.getElementById("captchaOverlay");
+const grid = document.getElementById("captchaGrid");
+const targetText = document.getElementById("captchaTarget");
+const statusText = document.getElementById("captchaStatus");
+
+let currentTask = "";
+let selected = new Set();
+
+function openCaptcha() {
+  overlay.classList.add("is-open");
+  createChallenge();
+}
+
+function closeCaptcha() {
+  overlay.classList.remove("is-open");
+}
+
+function createChallenge() {
+  selected.clear();
+  statusText.textContent = "";
+
+ 
+  currentTask = tasks[Math.floor(Math.random() * tasks.length)];
+  targetText.textContent = translated(currentTask);
+
+  grid.innerHTML = "";
+  tiles.forEach((tile, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "captcha-tile";
+    button.setAttribute("aria-label", `Квадрат ${index + 1}`);
+
+    const img = document.createElement("img");
+    img.src = tile.image;
+    img.alt = "";
+    img.draggable = false;
+    button.appendChild(img);
+
+    button.addEventListener("click", () => {
+      if (selected.has(index)) {
+        selected.delete(index);
+        button.classList.remove("selected");
+      } else {
+        selected.add(index);
+        button.classList.add("selected");
+      }
+    });
+
+    grid.appendChild(button);
+  });
+}
+
+function checkCaptcha() {
+  const correct = new Set(
+    tiles.map((tile, index) =>
+      tile.elements.includes(currentTask) ? index : -1
+    ).filter(index => index !== -1)
+  );
+
+  const isCorrect =
+    correct.size === selected.size &&
+    [...correct].every(index => selected.has(index));
+
+  if (isCorrect) {
+    statusText.textContent = uiText[language].success;
+    statusText.style.color = "#16803c";
+    setTimeout(closeCaptcha, 900);
+  } else {
+    statusText.textContent = uiText[language].retry;
+    statusText.style.color = "#c62828";
+    
+    setTimeout(createChallenge, 900);
+  }
+}
+
+document.getElementById("openCaptcha").addEventListener("click", openCaptcha);
+document.getElementById("closeCaptcha").addEventListener("click", closeCaptcha);
+document.getElementById("confirmCaptcha").addEventListener("click", checkCaptcha);
+document.getElementById("languageToggle").addEventListener("click", () => {
+  language = language === "ru" ? "en" : "ru";
+  updateLanguageUI();
+});
+
+
+overlay.addEventListener("click", event => {
+  if (event.target === overlay) closeCaptcha();
+});
+
+
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") closeCaptcha();
+});
+</script>
+</body>
+</html>
