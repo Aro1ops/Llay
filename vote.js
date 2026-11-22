@@ -138,12 +138,12 @@
     ] },
     { nominees: [
       { name: "Архип Патриот", image: "Images/A_Russ.JPG" },
-      { name: "Архип ВСУ", image: "Images/A_Uk.png" },
-      { name: "Архип Питбайкер", image: "Images/A_Pit.png" },
+      { name: "Архип ВСУ", image: "Images/A_Uk.PNG" },
+      { name: "Архип Питбайкер", image: "Images/A_Pit.PNG" },
       { name: "Архип", image: "Images/A_Svin.png" },
-      { name: "Архип Свин", image: "Images/A_sv.png" },
-      { name: "Архип Пятерка", image: "Images/A_opka.png" },
-      { name: "Архип Хойщик", image: "Images/A_hoi.png" },
+      { name: "Архип Свин", image: "Images/A_sv.PNG" },
+      { name: "Архип Пятерка", image: "Images/A_opka.PNG" },
+      { name: "Архип Хойщик", image: "Images/A_hoi.PNG" },
       
     ] },
   ];
