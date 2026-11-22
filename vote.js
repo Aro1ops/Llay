@@ -11,7 +11,7 @@
       { name: "Глебасик", image: "Images/Gleb.png" },
       { name: "Антон", image: "Images/Anton.png" },
       { name: "Никита шкет", image: "Images/NikitaS.png" },
-      { name: "Ферапонтов", image: "Images/Default.png" }
+      { name: "Ферапонтов", image: "Images/Ferp.png" }
 
     ] },
     
@@ -26,6 +26,7 @@
       { name: "Валерия Гадем", image: "Images/Valeria.png" }
     ] },
     
+    
     { nominees: [
       { name: "Моггринка и Леня Чад", image: "Images/MundL.png" },
       { name: "Даша и максим", image: "Images/DundM.png" },
@@ -37,7 +38,7 @@
   
     { nominees: [
       { name: "Леня чад", image: "Images/Chad.png" },
-      { name: "Бульба", image: "Images/DefaultW.png" },
+      { name: "Даша", image: "Images/DefaultW.png" },
       { name: "Лика", image: "Images/DefaultW.png" },
       { name: "Михунчик", image: "Images/Mixunchick.png" },
       { name: "Глебасик", image: "Images/Gleb.png" },
@@ -68,7 +69,7 @@
       { name: "Моггринка", image: "Images/Moggrinka.png" },
       { name: "Лика", image: "Images/DefaultW.png" },
       { name: "Дмитрий моггаров", image: "Images/Dima.png" },
-      { name: "Глебасик", image: "Images/Gleb.png" },
+      
       { name: "Сукач", image: "Images/Sukach.png" },
       { name: "Лёва", image: "Images/Leva.png" },
       { name: "Михунчик", image: "Images/Mixunchick.png" },
@@ -86,19 +87,19 @@
     { nominees: [
       { name: "Моггринка", image: "Images/Moggrinka.png" },
       { name: "Лика", image: "Images/DefaultW.png" },
-      { name: "Бульба", image: "Images/DefaultW.png" },
+      { name: "Даша", image: "Images/DefaultW.png" },
       { name: "Алиса", image: "Images/DefaultW.png" },
       { name: "Ника бьюти", image: "Images/Nika.png" },
       { name: "Глебасик", image: "Images/Gleb.png" },
       { name: "Валерия гадем", image: "Images/Valeria.png" },
-      { name: "Бобер (батя лики)", image: "Images/Default.png" },
+      
     ] },
     { nominees: [
       { name: "Моггринка", image: "Images/Moggrinka.png" },
       { name: "Новик", image: "Images/Novik.png" },
       { name: "Михунчик", image: "Images/Mixunchick.png" },
       { name: "Лёва", image: "Images/Leva.png" },
-      { name: "Ферапонтов", image: "Images/Default.png" },
+      { name: "Ферапонтов", image: "Images/Ferp.png" },
       { name: "Дмитрий моггаров", image: "Images/Dima.png" },
       { name: "Леня чад ", image: "Images/Chad.png" },
     ] },
@@ -107,7 +108,7 @@
       { name: "Евроспар", image: "Images/EuroSpar.jpg" },
       { name: "Пакет с водой в Иваново", image: "Images/Ivanovo.jpg" },
       { name: "Смешные цены", image: "Images/FunnyPrices.jpg" },
-      { name: "Баня во врево", image: "Images/VrevoBanya.jpg.png" },
+      { name: "Баня во врево", image: "Images/VrevoBanya.jpg" },
       { name: "Последняя ночь во врево", image: "Images/NightVrevo.png" },
     ] },
     { nominees: [
@@ -115,7 +116,36 @@
       { name: "Разоблочение на сукача", image: "Images/RazS.jpg" },
       { name: "Турнир по зомби заражению", image: "Images/ZZ.png" },
     ] },
-    
+    { nominees: [
+      { name: "Моггринка БК", image: "Images/Moggrinka_bk.png" },
+      { name: "Новик БК", image: "Images/Novik_bk.png" },
+      { name: "Кирилл БК", image: "Images/Kirill_bk.png" },
+      { name: "Архип БК", image: "Images/A_BK.png" },
+      { name: "Сукач БК", image: "Images/Suckach_bk.png" },
+      { name: "Рома БК", image: "Images/Roma_bk.png" },
+      { name: "Леня чад БК", image: "Images/Chad_bk.png" },
+    ] },
+    { nominees: [
+      { name: "Моггринка", image: "Images/Moggrinka.png" },
+      { name: "Новик", image: "Images/Novik.png" },
+      { name: "Михунчик", image: "Images/Mixunchick.png" },
+      { name: "Лёва", image: "Images/Leva.png" },
+      { name: "Сукач", image: "Images/Sukach.png" },
+      { name: "Ферапонтов", image: "Images/Ferp.png" },
+      { name: "Дмитрий моггаров", image: "Images/Dima.png" },
+      { name: "Леня чад ", image: "Images/Chad.png" },
+      { name: "Архип", image: "Images/Arkhip.png" },
+    ] },
+    { nominees: [
+      { name: "Архип Патриот", image: "Images/A_Russ.JPG" },
+      { name: "Архип ВСУ", image: "Images/A_Uk.png" },
+      { name: "Архип Питбайкер", image: "Images/A_Pit.png" },
+      { name: "Архип", image: "Images/A_Svin.png" },
+      { name: "Архип Свин", image: "Images/A_sv.png" },
+      { name: "Архип Пятерка", image: "Images/A_opka.png" },
+      { name: "Архип Хойщик", image: "Images/A_hoi.png" },
+      
+    ] },
   ];
 
   const TEXT = {
