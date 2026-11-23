@@ -1,4 +1,3 @@
-
 (function () {
   const NOMINATIONS = [
     //  (ZLAY KING)
@@ -69,7 +68,7 @@
       { name: "Моггринка", image: "Images/Moggrinka.png" },
       { name: "Лика", image: "Images/DefaultW.png" },
       { name: "Дмитрий моггаров", image: "Images/Dima.png" },
-      
+      { name: "Глебасик", image: "Images/Gleb.png" },
       { name: "Сукач", image: "Images/Sukach.png" },
       { name: "Лёва", image: "Images/Leva.png" },
       { name: "Михунчик", image: "Images/Mixunchick.png" },
@@ -146,6 +145,15 @@
       { name: "Архип Хойщик", image: "Images/A_hoi.PNG" },
       
     ] },
+
+    
+    { title: "Трек года", nominees: [
+      { name: "Туса медуза by Arkhip", image: "Images/Tusa_A.jpg", audio: "Audio/Tusa_a.mp3" },
+      { name: "Only swag by Moggarov", image: "Images/Only_swag_D.jpg", audio: "Audio/only_swag.mp3" },
+      { name: "1311 by Kala", image: "Images/1311_Kala.jpg", audio: "Audio/kala.mp3" },
+      { name: "её праень лох ебать by Moggrinka", image: "Images/Track_moggrinka.png", audio: "Audio/Moggrinka.mp3" },
+      { name: "Ма я могг by Solomaslik", image: "Images/Mogg_Maslik.jpg", audio: "Audio/mogg_m.mp3" },
+    ] },
   ];
 
   const TEXT = {
@@ -156,8 +164,9 @@
     voted: "Ваш голос",
     confirm: "Подтвердить",
     hintPick: "Выберите номинанта и нажмите «Подтвердить»",
-    hintReady: "Проверьте выбор. После подтверждения изменить голос нельзя",
-    hintLocked: "Ваш голос засчитан. Изменить его нельзя",
+    hintReady: "Проверьте выбор и нажмите «Подтвердить»",
+    hintChange: "Голос будет изменён: прошлый выбор отменится",
+    hintLocked: "Ваш голос засчитан. Можно выбрать другого номинанта",
     empty: "Номинанты пока не добавлены",
     cardStatus: name => "Ваш выбор: " + name
   };
@@ -172,13 +181,15 @@
 
   const GOATCOUNTER_PREFIX = "";         
   const slug = t => String(t).replace(/\s+/g, " ").trim().replace(/ /g, "_");
-  function track(nominationIndex, nominationTitle, nomineeName) {
+  
+  const MINUS_SUFFIX = ":minus";
+  function track(nominationIndex, nominationTitle, nomineeName, suffix) {
     try {
       if (window.goatcounter && typeof window.goatcounter.count === "function") {
         const cfg = NOMINATIONS[nominationIndex] || {};
         const nomination = slug(cfg.trackName || nominationTitle);
         const path = (GOATCOUNTER_PREFIX ? GOATCOUNTER_PREFIX + ":" : "") +
-                     nomination + ":" + slug(nomineeName);
+                     nomination + ":" + slug(nomineeName) + (suffix || "");
         window.goatcounter.count({
           path: path,
           title: path.replace(/_/g, " "),
@@ -262,27 +273,30 @@
 
 
   function refreshState() {
-    const locked = hasVoted(currentIndex);
-    const chosen = locked ? votes[currentIndex] : pending;
+    votes = loadVotes();
+    const voted = votes[currentIndex];           
+    const hasVote = voted !== undefined;
 
     gridEl.querySelectorAll(".vote-nominee").forEach(item => {
       const i = Number(item.dataset.i);
       const btn = item.querySelector("[data-vote-index]");
-      item.classList.toggle("is-voted", locked && i === chosen);
-      item.classList.toggle("is-selected", !locked && i === chosen);
-      item.classList.toggle("is-dim", locked && i !== chosen);
-      btn.disabled = locked;
-      setGemText(btn, locked && i === chosen ? TEXT.voted
-                    : !locked && i === chosen ? TEXT.selected
-                    : TEXT.vote);
+      const isNew = pending !== null && i === pending && i !== voted;
+      const isCur = hasVote && i === voted && (pending === null || pending === voted);
+      item.classList.toggle("is-voted", isCur);
+      item.classList.toggle("is-selected", isNew);
+      item.classList.remove("is-dim");
+      btn.disabled = false;
+      setGemText(btn, isNew ? TEXT.selected : (hasVote && i === voted) ? TEXT.voted : TEXT.vote);
     });
 
-    confirmBtn.hidden = locked;
-    confirmBtn.disabled = pending === null;
-    hintEl.textContent = locked ? TEXT.hintLocked
+    const settled = hasVote && (pending === null || pending === voted);
+    confirmBtn.hidden = settled;
+    confirmBtn.disabled = pending === null || pending === voted;
+    hintEl.textContent = settled ? TEXT.hintLocked
                        : pending === null ? TEXT.hintPick
+                       : hasVote ? TEXT.hintChange
                        : TEXT.hintReady;
-    footerEl.classList.toggle("is-locked", locked);
+    footerEl.classList.toggle("is-locked", settled);
   }
 
   function render(index) {
@@ -314,6 +328,13 @@
         s.textContent = (nominee.name || "?").charAt(0);
         photo.appendChild(s);
       };
+      if (nominee.audio) {
+        photo.classList.add("has-audio");
+        photo.dataset.audio = nominee.audio;
+        photo.setAttribute("role", "button");
+        photo.setAttribute("tabindex", "0");
+        photo.setAttribute("aria-label", "Играть: " + nominee.name);
+      }
       if (nominee.image) {
         const img = document.createElement("img");
         img.src = nominee.image; img.alt = nominee.name; img.draggable = false;
@@ -334,6 +355,42 @@
     refreshState();
   }
 
+ 
+  const player = new Audio();
+  player.preload = "none";
+  let playingPhoto = null;
+
+  function resetPhoto(photo) {
+    if (!photo) return;
+    photo.classList.remove("is-playing");
+    photo.style.removeProperty("--p");
+  }
+  function stopAudio() {
+    player.pause();
+    resetPhoto(playingPhoto);
+    playingPhoto = null;
+  }
+  function togglePlay(photo) {
+    const src = photo.dataset.audio;
+    if (!src) return;
+    if (playingPhoto === photo) {            
+      if (player.paused) { player.play().catch(() => {}); photo.classList.add("is-playing"); }
+      else { player.pause(); photo.classList.remove("is-playing"); }
+      return;
+    }
+    resetPhoto(playingPhoto);              
+    playingPhoto = photo;
+    player.src = src;
+    player.play().catch(() => {});
+    photo.classList.add("is-playing");
+  }
+  player.addEventListener("timeupdate", () => {
+    if (playingPhoto && player.duration) {
+      playingPhoto.style.setProperty("--p", (player.currentTime / player.duration * 100) + "%");
+    }
+  });
+  player.addEventListener("ended", stopAudio);
+
   function openModal(index) {
     currentIndex = index;
     pending = null;
@@ -343,6 +400,7 @@
     closeBtn.focus();
   }
   function closeModal() {
+    stopAudio();
     modal.classList.remove("is-open");
     currentIndex = -1;
     pending = null;
@@ -357,13 +415,16 @@
 
 
   function selectNominee(i) {
-    if (hasVoted(currentIndex)) return;
-    pending = i;
+    votes = loadVotes();
+    pending = (votes[currentIndex] === i) ? null : i;  
     refreshState();
   }
 
   function confirmVote() {
-    if (pending === null || hasVoted(currentIndex)) return;   
+    if (pending === null) return;
+    votes = loadVotes();
+    const previous = votes[currentIndex];
+    if (previous === pending) return;
     const cfg = NOMINATIONS[currentIndex] || { nominees: [] };
     const nominee = cfg.nominees[pending];
     if (!nominee) return;
@@ -379,7 +440,11 @@
     votes = loadVotes();
     votes[currentIndex] = pending;       
     saveVotes(votes);
-    track(currentIndex, titleEl.textContent, nominee.name);   
+    if (previous !== undefined) {                      
+      const prevNominee = cfg.nominees[previous];
+      if (prevNominee) track(currentIndex, titleEl.textContent, prevNominee.name, MINUS_SUFFIX);
+    }
+    track(currentIndex, titleEl.textContent, nominee.name);  
     updateCardStatus(currentIndex, nominee.name);
     pending = null;
     refreshState();                      
@@ -406,6 +471,12 @@
     
     if (modal.classList.contains("is-open")) {
       if (t === modal || t.closest(".vote-close")) { e.stopPropagation(); closeModal(); return; }
+      const audioPhoto = t.closest(".vote-photo[data-audio]");
+      if (audioPhoto && modal.contains(audioPhoto)) {
+        e.stopPropagation();
+        togglePlay(audioPhoto);
+        return;
+      }
       const voteBtn = t.closest("[data-vote-index]");
       if (voteBtn && modal.contains(voteBtn)) {
         e.stopPropagation();
@@ -418,7 +489,13 @@
   }, true);
 
   document.addEventListener("keydown", e => {
-    if (e.key === "Escape" && modal.classList.contains("is-open")) closeModal();
+    if (!modal.classList.contains("is-open")) return;
+    if (e.key === "Escape") closeModal();
+    const ph = document.activeElement;
+    if ((e.key === "Enter" || e.key === " ") && ph && ph.matches && ph.matches(".vote-photo[data-audio]")) {
+      e.preventDefault();
+      togglePlay(ph);
+    }
   });
 
   function restoreStatuses() {
