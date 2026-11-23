@@ -151,7 +151,7 @@
       { name: "Туса медуза by Arkhip", image: "Images/Tusa_A.jpg", audio: "Audio/Tusa_a.mp3" },
       { name: "Only swag by Moggarov", image: "Images/Only_swag_D.jpg", audio: "Audio/only_swag.mp3" },
       { name: "1311 by Kala", image: "Images/1311_Kala.jpg", audio: "Audio/kala.mp3" },
-      { name: "её праень лох ебать by Moggrinka", image: "Images/Track_moggrinka.png", audio: "Audio/Moggrinka.mp3" },
+      { name: "её праень лох ебать by Moggrinka", image: "Images/Track_moggrinka.PNG", audio: "Audio/Moggrinka.mp3" },
       { name: "Ма я могг by Solomaslik", image: "Images/Mogg_Maslik.jpg", audio: "Audio/mogg_m.mp3" },
     ] },
   ];
